@@ -1,0 +1,21 @@
+[
+    {
+      "id": "1",
+      "title": "Liquid Dreams",
+      "artist": "Aurora Synth",
+      "album": "Golden Waves",
+      "cover": "https://yourdomain.com/images/album1.jpg",
+      "price": "0.05",
+      "url": "https://yourdomain.com/audio/liquid-dreams.mp3"
+    },
+    {
+      "id": "2",
+      "title": "Digital Flow",
+      "artist": "Neon Pulse",
+      "album": "Cyber Realm",
+      "cover": "https://yourdomain.com/images/album2.jpg",
+      "price": "0.08",
+      "url": "https://yourdomain.com/audio/digital-flow.mp3"
+    }
+  ]
+  
