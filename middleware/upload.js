@@ -1,26 +1,5 @@
-// middleware/upload.js
-
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-
-// Ensure the uploads directory exists
-const uploadDir = path.resolve('./uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const uniqueName = `${Date.now()}-${file.fieldname}${ext}`;
-    cb(null, uniqueName);
-  }
-});
 
 // File filter for PDF and image files only
 const fileFilter = (req, file, cb) => {
@@ -35,5 +14,14 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Final multer instance
-export const upload = multer({ storage, fileFilter });
+// Memory storage (no files saved on disk)
+const storage = multer.memoryStorage();
+
+// Multer instance
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 } // Optional: limit to 5MB
+});
+
+export default upload;
