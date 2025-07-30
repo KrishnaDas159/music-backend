@@ -51,8 +51,11 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/web3", web3Routes);
 app.use("/api/privacy", privacyRoutes);
 app.use("/api/allnotifications", allnotificationRoutes);
+
+
+module.exports=app;
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server running on http://localhost:${PORT}`);
+// });
