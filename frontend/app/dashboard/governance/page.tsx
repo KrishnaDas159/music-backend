@@ -84,7 +84,7 @@ export default function Governance() {
       <div className="min-h-screen serene-bg">
         <div className="container mx-auto px-6 py-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-8" >
             <button
                 onClick={() => router.push("/dashboard")}
                 className="back-button flex items-center space-x-2 px-4 py-2 rounded-full"

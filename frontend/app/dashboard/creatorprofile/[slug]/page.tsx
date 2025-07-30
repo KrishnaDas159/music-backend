@@ -32,7 +32,7 @@ export default function CreatorProfile() {
   const [userData, setUserData] = useState<any>(null);
   const [nfts, setNfts] = useState<any[]>([]);
 
-  const [liked, setLiked] = useState<string[]>([]);
+  const [liked, setLiked] = useState<any[]>([]);
   const [vaultStats, setVaultStats] = useState<any[]>([]);
   const [followingList, setFollowingList] = useState<any[]>([]);
   const [revenue, setRevenue] = useState<any[]>([]);
@@ -40,8 +40,8 @@ export default function CreatorProfile() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [genre, setGenre] = useState('');
-  const [musicFile, setMusicFile] = useState(null);
-  const [thumbnail, setThumbnail] = useState(null);
+  const [musicFile, setMusicFile] = useState<any>(null);
+  const [thumbnail, setThumbnail] = useState<any>(null);
   const [tokenizeEnabled, setTokenizeEnabled] = useState(false);
   const [tokenPercentage, setTokenPercentage] = useState([30]); // or [0]
   const [pricePerToken, setPricePerToken] = useState('');
@@ -117,7 +117,7 @@ export default function CreatorProfile() {
     formData.append("genre", genre);
     formData.append("musicFile", musicFile);
     formData.append("thumbnailFile", thumbnail);
-    formData.append("tokenized", tokenizeEnabled);
+formData.append("tokenized", tokenizeEnabled ? "true" : "false");
     formData.append("tokenAddress", "0x123"); // Replace with real address if needed
     formData.append("tokenSupply", numberOfTokens);
     formData.append("creatorAddress", "0xab687687c"); // Replace with real address if needed

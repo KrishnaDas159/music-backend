@@ -1,9 +1,9 @@
-export const signMetaTx = async (signer : string, payload) => {
+export const signMetaTx = async (signer : string, payload : any) => {
   const message = JSON.stringify(payload)
-  const signature = await signer.signMessage(message)
-  return { payload, signature }
+  // const signature = await signer.signMessage(message)
+  return { payload }
 }
-export const sendMetaTx = async (signedPayload) => {
+export const sendMetaTx = async (signedPayload : any) => {
   const res = await fetch('/api/relay', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

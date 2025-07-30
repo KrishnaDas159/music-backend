@@ -19,10 +19,10 @@ interface SearchResult {
   id: string;
   title?: string;
   artist?: string;
-  cover?: string;
+  cover?: any;
   price?: string;
   name?: string;
-  avatar?: string;
+  avatar?: any;
   verified?: boolean;
   followers?: string;
 }
