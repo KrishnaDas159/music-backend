@@ -36,7 +36,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
-app.use('/uploads', express.static('uploads'));
+
 
 // Routes
 app.use('/api/auth', userRoutes);
