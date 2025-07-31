@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mysten/sui": "^1.36.0",
+    "@mysten/sui.js": "^0.54.1",
     "@privy-io/react-auth": "^2.18.1",
     "@privy-io/wagmi": "^1.0.5",
     "@radix-ui/react-label": "^2.1.7",

@@ -36,7 +36,12 @@ const mockClaimable = [
   }
 ];
 
-export function ClaimableTab() {
+type Props = {
+  onClaim: (id: number) => void;
+  onClaimAll: () => void;
+};
+
+export function ClaimableTab({ onClaim, onClaimAll }: Props) {
   const totalClaimable = mockClaimable
     .filter(item => item.status === "ready")
     .reduce((sum, item) => sum + parseFloat(item.claimableAmount.replace("$", "").replace(",", "")), 0);
@@ -56,7 +61,11 @@ export function ClaimableTab() {
               </div>
             </div>
             <div className="text-right">
-              <Button size="lg" className="glow-golden pulse-golden">
+              <Button
+                size="lg"
+                className="glow-golden pulse-golden"
+                onClick={onClaimAll}
+              >
                 <Gift className="w-5 h-5 mr-2" />
                 Claim All
               </Button>
@@ -82,15 +91,12 @@ export function ClaimableTab() {
                       {item.songTitle}
                     </h4>
                     <p className="text-muted-foreground">{item.artist}</p>
-                    <Badge 
-                      variant="outline" 
-                      className="mt-2"
-                    >
+                    <Badge variant="outline" className="mt-2">
                       {item.yieldType}
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="text-right space-y-3">
                   <div>
                     <div className="text-2xl font-bold text-emerald-600">
@@ -101,7 +107,7 @@ export function ClaimableTab() {
                       {item.daysAccrued} days accrued
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {item.status === "ready" ? (
                       <>
@@ -115,12 +121,13 @@ export function ClaimableTab() {
                       </>
                     )}
                   </div>
-                  
-                  <Button 
+
+                  <Button
                     variant={item.status === "ready" ? "default" : "outline"}
                     size="sm"
                     disabled={item.status !== "ready"}
                     className={item.status === "ready" ? "glow-golden" : ""}
+                    onClick={() => onClaim(item.id)}
                   >
                     {item.status === "ready" ? "Claim" : "Pending"}
                   </Button>
