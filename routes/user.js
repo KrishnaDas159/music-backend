@@ -2,7 +2,8 @@
 
 import express from 'express';
 import { signup, signin } from '../controllers/user.js';
-import { upload } from '../middleware/upload.js';
+import upload from '../middleware/upload.js';
+
 
 const router = express.Router();
 
