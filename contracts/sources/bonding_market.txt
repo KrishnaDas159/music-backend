@@ -1,0 +1,172 @@
+module sui_modules2::bonding_market {
+    use sui::balance::Balance;
+    use sui::object::{Self, UID};
+    use sui::tx_context::{Self, TxContext};
+    use sui::transfer;
+    use sui::coin::{Self, Coin, TreasuryCap};
+    use sui::sui::SUI;
+    use sui::event;
+    use sui_modules2::curve::{Self, Curve};
+    use sui_modules2::vault::{Self, Vault};
+    use sui_modules2::curve_governance::{Self, CurveGovernance, CurveParams};
+    use sui_modules2::content_token::{Self, CONTENT_TOKEN, ContentToken};
+
+    // Errors
+    const EInvalidAmount: u64 = 0;
+    const EInsufficientFunds: u64 = 1;
+    const ETrackNotInitialized: u64 = 2;
+
+    // Market struct to manage bonding curve and vault for a track
+    public struct BondingMarket has key, store {
+        id: UID,
+        track_id: u64,
+        curve: Curve,
+        vault: Vault,
+    }
+
+    // Events for market actions
+    public struct MarketCreated has copy, drop {
+        market_id: address,
+        track_id: u64,
+    }
+
+    public struct TokensMinted has copy, drop {
+        market_id: address,
+        user: address,
+        amount: u64,
+        cost: u64,
+    }
+
+    public struct TokensBurned has copy, drop {
+        market_id: address,
+        user: address,
+        amount: u64,
+        withdrawn: u64,
+    }
+
+    // Initialize a new bonding market for a track
+    public entry fun create_market(
+        governance: &CurveGovernance,
+        track_id: u64,
+        ctx: &mut TxContext
+    ) {
+        let params = curve_governance::get_curve_params(governance, track_id);
+        let curve = curve::create_curve(
+            curve_governance::get_slope(&params),
+            curve_governance::get_base_price(&params),
+            0, // Adjust total_supply as needed
+            ctx
+        );
+
+        let vault = vault::create_vault(ctx);
+        let market = BondingMarket {
+            id: object::new(ctx),
+            track_id,
+            curve,
+            vault,
+        };
+        let market_id = sui::object::uid_to_address(&market.id);
+        transfer::share_object(market);
+        event::emit(MarketCreated {
+            market_id,
+            track_id,
+        });
+    }
+    // Mint tokens for a user
+    public entry fun mint_tokens(
+        market: &mut BondingMarket,
+        treasury: &mut TreasuryCap<CONTENT_TOKEN>,
+        amount: u64,
+        mut payment: Coin<SUI>,
+        ctx: &mut TxContext
+    ) {
+        assert!(amount > 0, EInvalidAmount);
+        let supply = curve::get_total_supply(&market.curve);
+        let cost = curve::calculate_cost_to_mint(&market.curve, supply, supply + amount);
+        assert!(coin::value(&payment) >= cost, EInsufficientFunds);
+
+        // Deposit payment to vault
+        let payment_balance:Balance<SUI> = coin::into_balance(coin::split(&mut payment, cost, ctx));
+        vault::deposit_revenue<SUI>(&mut market.vault, payment_balance);
+
+        // Mint tokens
+        content_token::mint_content_tokens(
+            treasury,
+            sui::tx_context::sender(ctx),
+            amount,
+            sui::tx_context::sender(ctx),
+            vector::empty<u8>(), // Simplified track_id for demo
+            ctx
+        );
+
+        // Update curve and vault
+        curve::mint(&mut market.curve, amount, ctx);
+        vault::update_supply(&mut market.vault, amount);
+
+        event::emit(TokensMinted {
+            market_id: sui::object::uid_to_address(&market.id),
+            user: sui::tx_context::sender(ctx),
+            amount,
+            cost,
+        });
+
+        // Return excess payment if any
+        if (coin::value(&payment) > 0) {
+            transfer::public_transfer(payment, sui::tx_context::sender(ctx));
+        } else {
+            coin::destroy_zero(payment);
+        };
+
+    }
+
+    fun mul_div(a: u64, b: u64, c: u64): u64 {
+        (a * b) / c
+    }
+
+    // Burn tokens and withdraw SUI
+    public entry fun burn_tokens(
+        market: &mut BondingMarket,
+        treasury: &mut TreasuryCap<CONTENT_TOKEN>,
+        token: &mut ContentToken,
+        amount: u64,
+        ctx: &mut TxContext
+    ) {
+        assert!(amount > 0 && amount <= content_token::get_balance(token), EInvalidAmount);
+        assert!(amount <= curve::get_total_supply(&market.curve), EInvalidAmount);
+
+
+        // Burn tokens
+        content_token::burn_content_tokens(treasury, token, amount, ctx);
+
+        // Withdraw proportional SUI from vault
+        vault::withdraw_after_burn(&mut market.vault, amount, ctx);
+
+        // Update curve
+        curve::burn(&mut market.curve, amount, ctx);
+
+        event::emit(TokensBurned {
+            market_id: sui::object::uid_to_address(&market.id),
+            user: sui::tx_context::sender(ctx),
+            amount,
+            withdrawn: mul_div(
+                vault::total_funds(&market.vault),
+                amount,
+                curve::get_total_supply(&market.curve) + amount
+            ),
+
+        });
+    }
+
+    // Getters
+    public fun get_track_id(market: &BondingMarket): u64 {
+        market.track_id
+    }
+
+    public fun get_curve(market: &BondingMarket): &Curve {
+        &market.curve
+    }
+
+    public fun get_vault(market: &BondingMarket): &Vault {
+        &market.vault
+    }
+}

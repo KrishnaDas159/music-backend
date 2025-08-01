@@ -1,0 +1,68 @@
+#[test_only]
+module sui_modules2::bonding_curve{
+    use sui::test_scenario;
+    use sui_modules2::curve::{Self, Curve};
+
+    /// Test initialization and core bonding curve functionality
+    fun test_bonding_curve(scenario: &mut test_scenario::Scenario) {
+        let admin = @0x1;
+
+        // First transaction: initialize the curve
+        test_scenario::next_tx(scenario, admin);
+        {
+            let ctx = test_scenario::ctx(scenario);
+            curve::initialize(100, 1000, ctx);
+        };
+
+        // Second transaction: check curve state and calculations
+        test_scenario::next_tx(scenario, admin);
+        {
+            let mut curve = test_scenario::take_shared<Curve>(scenario);
+            assert!(curve::slope(&curve) == 100, 1);
+            assert!(curve::base_price(&curve) == 1000, 2);
+            assert!(curve::get_total_supply(&curve) == 0, 3);
+
+            let price = curve::get_curve_price(&curve, 0);
+            assert!(price == 1000, 4);
+            let price = curve::get_curve_price(&curve, 10);
+            assert!(price == 2000, 5);
+
+            let cost = curve::calculate_cost_to_mint(&curve, 0, 10);
+            assert!(cost == 14500, 6); // Fixed: Expect 14,500
+
+            let return_amount = curve::calculate_return_on_burn(&curve, 0, 10);
+            assert!(return_amount == 14500, 7); // Fixed: Match mint cost
+
+            test_scenario::return_shared(curve);
+        };
+
+        // Third transaction: mint tokens
+        test_scenario::next_tx(scenario, admin);
+        {
+            let mut curve = test_scenario::take_shared<Curve>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+            curve::mint(&mut curve, 10, ctx);
+            assert!(curve::get_total_supply(&curve) == 10, 8);
+            test_scenario::return_shared(curve);
+        };
+
+        // Fourth transaction: burn tokens
+        test_scenario::next_tx(scenario, admin);
+        {
+            let mut curve = test_scenario::take_shared<Curve>(scenario);
+            let ctx = test_scenario::ctx(scenario);
+            curve::burn(&mut curve, 5, ctx);
+            assert!(curve::get_total_supply(&curve) == 5, 9);
+            test_scenario::return_shared(curve);
+        };
+    }
+
+    #[test]
+    public fun run_tests() {
+        let mut scenario = test_scenario::begin(@0x1);
+        test_bonding_curve(&mut scenario);
+        test_scenario::end(scenario);
+    }
+}
+
+//Sender: 0xf08ae3bdfdc0122d1baaf7a5363054e67518f0400eeba2f1dd721ea6e8085b3d
