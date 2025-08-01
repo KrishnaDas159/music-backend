@@ -20,12 +20,14 @@ import {
   Wallet
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useWallet } from "@suiet/wallet-kit";
+import { Transaction } from "@mysten/sui/transactions";
 
 
 export default function CreatorProfile() {
   const navigate = useRouter();
   const params = useParams();
-  const creatorId  = params.slug; 
+  const creatorId = params.slug;
   const [activeTab, setActiveTab] = useState("my-nfts");
   const [isWalletConnected, setIsWalletConnected] = useState(false);
 
@@ -47,7 +49,7 @@ export default function CreatorProfile() {
   const [pricePerToken, setPricePerToken] = useState('');
   const [numberOfTokens, setNumberOfTokens] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
-
+  const { account, signAndExecuteTransaction } = useWallet();
 
 
   const tabs = [
@@ -117,7 +119,7 @@ export default function CreatorProfile() {
     formData.append("genre", genre);
     formData.append("musicFile", musicFile);
     formData.append("thumbnailFile", thumbnail);
-formData.append("tokenized", tokenizeEnabled ? "true" : "false");
+    formData.append("tokenized", tokenizeEnabled ? "true" : "false");
     formData.append("tokenAddress", "0x123"); // Replace with real address if needed
     formData.append("tokenSupply", numberOfTokens);
     formData.append("creatorAddress", "0xab687687c"); // Replace with real address if needed
@@ -148,6 +150,41 @@ formData.append("tokenized", tokenizeEnabled ? "true" : "false");
   };
 
 
+  const handleCreateVault = async () => {
+    try {
+      const registryId = '0xYOUR_VAULT_REGISTRY_OBJECT_ID';
+      const trackId = 'song_abc_123'; 
+      const creator = account?.address;
+
+      if (!creator) {
+        alert("Wallet not connected");
+        return;
+      }
+
+      const tx = new Transaction();
+
+      tx.moveCall({
+        target: 'sui_modules2::vault::create_vault',
+        arguments: [
+          tx.object(registryId),
+          tx.pure.string(trackId),
+          tx.pure.address(account.address),
+        ],
+      });
+
+      const res = await signAndExecuteTransaction({
+        transaction: tx,
+      });
+
+      console.log("✅ Vault Created:", res);
+      alert("Vault created!");
+
+      setShowUploadModal(true);
+    } catch (error) {
+      console.error("❌ Vault creation failed:", error);
+      alert("Failed to create vault");
+    }
+  };
 
   const handleConnectWallet = () => {
     setIsWalletConnected(!isWalletConnected);
@@ -509,7 +546,7 @@ formData.append("tokenized", tokenizeEnabled ? "true" : "false");
                     </div>
 
                     <Button
-                      onClick={() => setShowUploadModal(true)}
+                      onClick={() => handleCreateVault()}
                       className="w-full py-4 text-lg bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white glow-golden"
                     >
                       Create and Tokenize
